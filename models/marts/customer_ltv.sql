@@ -36,7 +36,7 @@ enriched as (
         cl.lifetime_orders, cl.lifetime_value, cl.avg_order_value,
         cl.peak_running_total
     from customer_lifetime cl
-    left join customers c on cl.customer_id = c.customer_id
+    inner join customers c on cl.customer_id = c.customer_id
 ),
 region_rollup as (
     select e.region,
