@@ -17,6 +17,14 @@ jobs:
           python-version: "3.11"
       - run: pip install dbt-duckdb
       - uses: badaadata/semantic-risk-engine-action@v1
+        id: risk
         continue-on-error: true   # shadow mode - an API hiccup must never fail the build
         with:
           api_key: ${{ secrets.SEMANTIC_RISK_API_KEY }}
+
+      # Demo (#6) - consume the verdict via outputs.highest_severity. The action itself
+      # never blocks the merge; your own follow-up steps decide policy. This one only
+      # annotates, to show the mechanism. Values: HIGH / MEDIUM / LOW / INFO / NONE.
+      - name: Flag PRs that need a second reviewer
+        if: steps.risk.outputs.highest_severity == 'HIGH'
+        run: echo "::notice::HIGH semantic risk on this PR - a second reviewer is required (highest_severity=${{ steps.risk.outputs.highest_severity }})."

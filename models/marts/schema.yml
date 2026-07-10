@@ -5,3 +5,8 @@ models:
     config:
       meta:
         semantic_risk_critical: true
+  - name: customer_ltv
+    description: >
+      Customer lifetime value + regional rollup. Reads customer_revenue, so it is a
+      downstream consumer of it — this is what makes the "impacted models" list non-empty
+      when customer_revenue changes.
