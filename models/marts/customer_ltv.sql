@@ -34,9 +34,10 @@ customer_lifetime as (
 enriched as (
     select cl.customer_id, c.region, c.is_active,
         cl.lifetime_orders, cl.lifetime_value, cl.avg_order_value,
-        cl.peak_running_total
+        cl.peak_running_total, fo.first_order_date
     from customer_lifetime cl
     left join customers c on cl.customer_id = c.customer_id
+    left join first_orders fo on cl.customer_id = fo.customer_id
 ),
 region_rollup as (
     select e.region,
