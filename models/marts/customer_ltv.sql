@@ -45,7 +45,7 @@ region_rollup as (
         avg(e.avg_order_value) as region_aov,
         sum(case when e.is_active then 1 else 0 end) as active_customers
     from enriched e
-    inner join revenue r on e.customer_id = r.customer_id
+    inner join revenue r on r.customer_id = e.customer_id
     group by e.region
 )
 select region, customers, region_ltv, region_aov, active_customers,
