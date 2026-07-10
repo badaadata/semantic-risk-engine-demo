@@ -10,4 +10,4 @@ select
     count(o.order_id) as order_count
 from orders o
 left join {{ ref('stg_customers') }} c on o.customer_id = c.customer_id
-group by o.customer_id, c.region
+group by o.customer_id, c.region, o.order_date
