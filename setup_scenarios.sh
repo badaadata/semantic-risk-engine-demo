@@ -30,6 +30,8 @@ declare -A TARGETS=(
 for s in s1_join_flip s2_filter_removed s3_grain_change s4_metric_redefined s5_cosmetic_only \
          s6_ltv_join_flip s7_equivalent_condition s8_add_lookup_join; do
   git checkout main >/dev/null 2>&1
+  git branch -D "demo/$s" >/dev/null 2>&1 || true
+  git push origin --delete "demo/$s" >/dev/null 2>&1 || true
   git checkout -b "demo/$s"
   cp "scenarios/$s.sql" "${TARGETS[$s]}"
   git commit -am "${TITLES[$s]}"
