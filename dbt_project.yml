@@ -1,0 +1,5 @@
+name: semantic_risk_engine_demo
+version: "1.0.0"
+profile: sre_demo
+model-paths: ["models"]
+seed-paths: ["seeds"]

@@ -1,0 +1,7 @@
+version: 2
+models:
+  - name: customer_revenue
+    description: Revenue per customer and region (demo critical model).
+    config:
+      meta:
+        semantic_risk_critical: true

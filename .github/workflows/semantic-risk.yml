@@ -1,0 +1,22 @@
+name: Semantic Risk
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write   # required - the action posts the verdict as a PR comment
+jobs:
+  risk:
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install dbt-duckdb
+      - uses: badaadata/semantic-risk-engine-action@v1
+        continue-on-error: true   # shadow mode - an API hiccup must never fail the build
+        with:
+          api_key: ${{ secrets.SEMANTIC_RISK_API_KEY }}
