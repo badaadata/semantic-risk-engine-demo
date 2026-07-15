@@ -36,19 +36,15 @@ monthly_retail_sales AS (
         ON s.retailer_id = r.retailer_id 
        AND r.is_active = TRUE
     GROUP BY 1, 2, 3
-),
-
-final_rollup AS (
-    SELECT
-        sales_month,
-        retailer_id,
-        region,
-        transactions_volume,
-        gross_sales_revenue,
-        net_sales_revenue
-    FROM monthly_retail_sales
 )
 
-SELECT * FROM final_rollup
+SELECT
+    sales_month,
+    retailer_id,
+    region,
+    transactions_volume,
+    gross_sales_revenue,
+    net_sales_revenue
+FROM monthly_retail_sales
 -- 3. Qualify Logic Added
 QUALIFY row_number() over (partition by retailer_id order by sales_month asc) = 1
