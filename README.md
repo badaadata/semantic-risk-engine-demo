@@ -11,6 +11,12 @@ the Semantic Risk Engine comment tells the real story.
 | demo/s3_grain_change | order_date added to GROUP BY | HIGH - GRAIN MODIFIED (+ CRITICAL MODEL flag) |
 | demo/s4_metric_redefined | SUM -> COUNT under unchanged alias | MEDIUM - AGGREGATION MODIFIED |
 | demo/s5_cosmetic_only | Reformat + reorder + comment, zero semantic change | No semantic risks detected |
+| demo/s6_ltv_join_flip | LTV join type shift (LEFT -> INNER) | HIGH - JOIN MODIFIED |
+| demo/s7_equivalent_condition | Swap operands and reorganize logic | No semantic risks detected (Equivalent check) |
+| demo/s8_add_lookup_join | Add lookup join/active filter | HIGH - JOIN MODIFIED (LEFT -> INNER) |
+| demo/s9_long_query_mix | Mega query with 10 window functions and alias changes | HIGH - QUALIFY ADDED, 10 LOW - WINDOW_FUNCTION ADDED, 9 INFO - COLUMN ALIAS_MODIFIED |
+| demo/s10_all_severities | Multi-severity logic errors in customer LTV | 3 HIGH, 2 MEDIUM, 1 LOW (Mega consolidated report) |
+| demo/s11_multi_file | Refactor logic changes across 5 models | 6 HIGH, 12 MEDIUM (Multi-file risk report) |
 
 `customer_revenue` is tagged `semantic_risk_critical: true`, so s3 also demos the
 critical-model marker + downstream annotation.
