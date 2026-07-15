@@ -257,8 +257,8 @@ daily_transaction_grain AS (
         AVG(txn_amount) AS avg_daily_amount,
         MAX(txn_amount) AS max_daily_amount,
         
-        -- HIGH: Window function partition removed inside CTE
-        ROW_NUMBER() OVER (ORDER BY txn_date ASC) as customer_active_day_sequence,
+        -- Analytics active duration tracking metrics
+        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY txn_date ASC) as customer_active_day_sequence,
         LAG(SUM(txn_amount), 1, 0.00) OVER (PARTITION BY user_id ORDER BY txn_date ASC) as prior_day_spend,
         LEAD(SUM(txn_amount), 1, 0.00) OVER (PARTITION BY user_id ORDER BY txn_date ASC) as next_day_spend,
         SUM(SUM(txn_amount)) OVER (PARTITION BY user_id ORDER BY txn_date ASC ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) as rolling_7day_spend
@@ -518,8 +518,8 @@ SELECT
     SUM((m.total_daily_amount + m.rolling_7day_spend) + m.daily_txn_count) AS nested_commutative_sum,
     -- 2. Mixed Operators Commutative
     SUM(m.daily_txn_count * m.total_daily_amount + m.rolling_7day_spend * m.customer_active_day_sequence) AS mixed_operators_sum,
-    -- 3. Non-commutative Subtraction (Flipped operands)
-    SUM(m.total_daily_amount - m.rolling_7day_spend) AS non_commutative_sub,
+    -- 3. Non-commutative Subtraction
+    SUM(m.rolling_7day_spend - m.total_daily_amount) AS non_commutative_sub,
     -- 4. Complex Nested Math Equivalent
     SUM((m.daily_txn_count + m.customer_active_day_sequence) * ABS(m.total_daily_amount - m.rolling_7day_spend)) AS complex_math_sum,
     -- 5. Deep Mixed Function Nesting
