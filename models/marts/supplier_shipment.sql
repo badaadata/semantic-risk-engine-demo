@@ -6,7 +6,7 @@ WITH order_regions AS (
         o.order_date
     FROM {{ ref('stg_orders') }} o
     INNER JOIN {{ ref('stg_customers') }} c ON o.customer_id = c.customer_id
-    WHERE o.status = 'completed'
+    WHERE o.status = 'shipped'
 ),
 
 carrier_aggregates AS (

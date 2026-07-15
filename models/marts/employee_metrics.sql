@@ -29,7 +29,7 @@ payroll_calculations AS (
         e.is_active,
         e.hire_date,
         CASE 
-            WHEN e.department = 'US' THEN 95000.00
+            WHEN e.department = 'US' THEN 105000.00
             WHEN e.department = 'CA' THEN 85000.00
             ELSE 70000.00
         END AS base_salary,

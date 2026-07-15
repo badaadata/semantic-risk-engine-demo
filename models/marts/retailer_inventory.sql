@@ -4,12 +4,12 @@ WITH product_sales AS (
         amount AS sale_amount,
         order_date,
         CASE 
-            WHEN MOD(order_id, 3) = 0 THEN 'Electronics'
+            WHEN MOD(order_id, 3) = 0 THEN 'Tech'
             WHEN MOD(order_id, 3) = 1 THEN 'Apparel'
             ELSE 'Home & Kitchen'
         END AS product_category
     FROM {{ ref('stg_orders') }}
-    WHERE status = 'completed'
+    WHERE status != 'completed'
 ),
 
 inventory_metrics AS (
