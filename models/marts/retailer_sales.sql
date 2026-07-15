@@ -1,22 +1,17 @@
-/********************************************************************************
-  RETAILER SALES PERFORMANCE & GROWTH PIPELINE
-  DOMAIN: COMMERCIAL REVENUE & CONTRACT MARKETING ANALYSIS
-********************************************************************************/
-
 WITH sales_transactions AS (
     SELECT
         order_id,
         customer_id AS retailer_id,
         amount AS sale_amount,
         order_date,
-        -- Simulate discount structures
         CASE 
             WHEN amount > 250 THEN 0.15 
             WHEN amount > 100 THEN 0.05 
             ELSE 0.00 
         END AS discount_percentage
     FROM {{ ref('stg_orders') }}
-    WHERE status = 'completed'
+    -- 1. Filter Logic Shift (status = 'completed' -> 'shipped')
+    WHERE status = 'shipped'
 ),
 
 retailer_demographics AS (
@@ -36,8 +31,10 @@ monthly_retail_sales AS (
         SUM(s.sale_amount) AS gross_sales_revenue,
         SUM(s.sale_amount * (1.00 - s.discount_percentage)) AS net_sales_revenue
     FROM sales_transactions s
-    INNER JOIN retailer_demographics r ON s.retailer_id = r.retailer_id
-    WHERE r.is_active = TRUE
+    -- 2. Join Condition Logic Shift (Added active filter to ON clause)
+    INNER JOIN retailer_demographics r 
+        ON s.retailer_id = r.retailer_id 
+       AND r.is_active = TRUE
     GROUP BY 1, 2, 3
 )
 
@@ -49,3 +46,5 @@ SELECT
     gross_sales_revenue,
     net_sales_revenue
 FROM monthly_retail_sales
+-- 3. Qualify Logic Added
+QUALIFY row_number() over (partition by retailer_id order by sales_month asc) = 1
