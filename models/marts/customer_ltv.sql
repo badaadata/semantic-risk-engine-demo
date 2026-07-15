@@ -18,7 +18,7 @@ order_ranked as (
     from orders o
 ),
 first_orders as (
-    select customer_id, order_date as first_order_date
+    select customer_id, order_date as signup_date
     from order_ranked
     where order_seq = 1
 ),
