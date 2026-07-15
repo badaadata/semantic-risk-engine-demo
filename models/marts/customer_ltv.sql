@@ -13,7 +13,8 @@ customers as (
 ),
 order_ranked as (
     select o.order_id, o.customer_id, o.order_date, o.amount,
-        row_number() over (partition by o.customer_id order by o.order_date) as order_seq,
+        -- HIGH: Window function partition removed (partition by o.customer_id removed)
+        row_number() over (order by o.order_date) as order_seq,
         sum(o.amount) over (partition by o.customer_id order by o.order_date) as running_total
     from orders o
 ),
@@ -45,11 +46,18 @@ region_rollup as (
         avg(e.avg_order_value) as region_aov,
         sum(case when e.is_active then 1 else 0 end) as active_customers
     from enriched e
-    inner join revenue r on e.customer_id = r.customer_id
+    -- HIGH: Join condition modified (added total_revenue constraint to ON clause)
+    inner join revenue r on e.customer_id = r.customer_id and r.total_revenue > 10
     group by e.region
 )
 select region, customers, region_ltv, region_aov, active_customers,
-    region_ltv / nullif(customers, 0) as ltv_per_customer
+    -- HIGH: Calculation Formula shifted (nullif(customers, 0) -> nullif(customers * 1.1, 0))
+    region_ltv / nullif(customers * 1.1, 0) as ltv_per_customer,
+    -- LOW: Window function added to SELECT
+    dense_rank() over (order by region_ltv desc) as ltv_rank
 from region_rollup
-where region_ltv > 0
+-- MEDIUM: Threshold shifted (region_ltv > 0 -> region_ltv > 250)
+where region_ltv > 250
+-- INFO: Qualify added
+qualify ltv_rank <= 10
 order by region_ltv desc
