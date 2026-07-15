@@ -1,9 +1,3 @@
-/********************************************************************************
-  SNOWFLAKE / DBT SEMANTIC RISK ENGINE STRESS TEST
-  TOTAL LENGTH: 600+ LINES OF PURE SELECT / WITH ARCHITECTURE
-  REAL BUSINESS LOGIC: E-COMMERCE FINANCIAL ATTRIBUTION & INVENTORY PIPELINE
-********************************************************************************/
-
 WITH prep_orders AS (
     SELECT
         order_id,
@@ -326,7 +320,7 @@ order_financials AS (
         o.order_date,
         COUNT(DISTINCT f.product_id) AS product_count,
         SUM(f.quantity) AS total_items,
-        SUM(f.gross_item_revenue) AS gross_revenue,
+        SUM(f.gross_item_revenue) AS gross_revenue, 
         SUM(f.item_tax) AS total_tax,
         SUM(f.total_item_cogs) AS total_cogs,
         AVG(f.shipping_fee) AS base_shipping_fee,
@@ -505,26 +499,36 @@ massive_risk_filter_layer AS (
 -- MAIN TARGET EXECUTION LAYER
 -- Final Grain: Unified Corporate Risk Reporting Metrics
 SELECT
-    m.user_id,
-    m.txn_date,
-    m.daily_txn_count,
-    m.total_daily_amount,
-    m.rolling_7day_spend,
-    m.country_code,
-    m.risk_segment,
-    m.dynamic_risk_status,
+    m.user_id AS corporate_user_id, -- Rename (INFO 1)
+    m.txn_date AS transaction_date, -- Rename (INFO 2)
+    m.daily_txn_count AS daily_transaction_count, -- Rename (INFO 3)
+    m.total_daily_amount AS daily_spend_amount, -- Rename (INFO 4)
+    m.rolling_7day_spend AS weekly_spend_rolling, -- Rename (INFO 5)
+    m.country_code AS geographic_region, -- Rename (INFO 6)
+    m.risk_segment AS custom_risk_segment, -- Rename (INFO 7)
+    m.dynamic_risk_status AS active_risk_status, -- Rename (INFO 8)
     
-    -- 1. Nested Commutative Equivalent
-    SUM((m.total_daily_amount + m.rolling_7day_spend) + m.daily_txn_count) AS nested_commutative_sum,
-    -- 2. Mixed Operators Commutative
+    SUM((m.total_daily_amount + m.rolling_7day_spend) + m.daily_txn_count) AS sum_nested_commutative, -- Rename (INFO 9)
+    
     SUM(m.daily_txn_count * m.total_daily_amount + m.rolling_7day_spend * m.customer_active_day_sequence) AS mixed_operators_sum,
-    -- 3. Non-commutative Subtraction
     SUM(m.rolling_7day_spend - m.total_daily_amount) AS non_commutative_sub,
-    -- 4. Complex Nested Math Equivalent
     SUM((m.daily_txn_count + m.customer_active_day_sequence) * ABS(m.total_daily_amount - m.rolling_7day_spend)) AS complex_math_sum,
-    -- 5. Deep Mixed Function Nesting
-    SUM(ABS(m.rolling_7day_spend + m.total_daily_amount) + ROUND(m.daily_txn_count + m.customer_active_day_sequence, 2)) AS deep_mixed_sum
+    SUM(ABS(m.rolling_7day_spend + m.total_daily_amount) + ROUND(m.daily_txn_count + m.customer_active_day_sequence, 2)) AS deep_mixed_sum,
+
+    -- Exactly 10 Window Functions Added (LOW 1 to LOW 10) in the main SELECT block.
+    -- SRE's Rule 6 at top-level diff_engine suppresses the COLUMN ADDED (MEDIUM) warning for all 10 of these!
+    ROW_NUMBER() OVER (PARTITION BY m.country_code ORDER BY m.total_daily_amount DESC) as regional_sales_rank,
+    RANK() OVER (PARTITION BY m.country_code ORDER BY m.rolling_7day_spend DESC) as regional_loyalty_rank,
+    DENSE_RANK() OVER (PARTITION BY m.country_code ORDER BY m.daily_txn_count DESC) as regional_transaction_rank,
+    LEAD(m.total_daily_amount, 1, 0.00) OVER (PARTITION BY m.user_id ORDER BY m.txn_date ASC) as next_transaction_amount,
+    LAG(m.total_daily_amount, 1, 0.00) OVER (PARTITION BY m.user_id ORDER BY m.txn_date ASC) as prior_transaction_amount,
+    SUM(m.total_daily_amount) OVER (PARTITION BY m.user_id ORDER BY m.txn_date ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as cumulative_spend_to_date,
+    AVG(m.total_daily_amount) OVER (PARTITION BY m.user_id ORDER BY m.txn_date ASC ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) as rolling_7day_avg_spend,
+    COUNT(m.user_id) OVER (PARTITION BY m.country_code) as total_regional_users_count,
+    MIN(m.total_daily_amount) OVER (PARTITION BY m.user_id) as minimum_recorded_txn_amount,
+    MAX(m.total_daily_amount) OVER (PARTITION BY m.user_id) as maximum_recorded_txn_amount
 FROM massive_risk_filter_layer m
 WHERE m.dynamic_risk_status = 'HIGH_ALERT'
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8
+QUALIFY ROW_NUMBER() OVER (PARTITION BY m.country_code ORDER BY m.total_daily_amount DESC) = 1
 ORDER BY m.user_id ASC;
