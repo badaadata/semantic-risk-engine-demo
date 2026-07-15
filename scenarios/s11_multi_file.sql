@@ -5,7 +5,7 @@ WITH sales_transactions AS (
         amount AS sale_amount,
         order_date,
         CASE 
-            WHEN amount > 250 THEN 0.15 
+            WHEN amount > 250 THEN 0.20 
             WHEN amount > 100 THEN 0.05 
             ELSE 0.00 
         END AS discount_percentage
@@ -29,7 +29,7 @@ monthly_retail_sales AS (
         SUM(s.sale_amount * (1.00 - s.discount_percentage)) AS net_sales_revenue
     FROM sales_transactions s
     INNER JOIN retailer_demographics r ON s.retailer_id = r.retailer_id
-    WHERE r.is_active = TRUE
+    WHERE r.is_active = TRUE and r.region = 'US' or r.region = 'CA'
     GROUP BY 1, 2
 )
 
@@ -40,3 +40,4 @@ SELECT
     gross_sales_revenue,
     net_sales_revenue
 FROM monthly_retail_sales
+QUALIFY row_number() over (partition by retailer_id order by sales_month asc) = 1
